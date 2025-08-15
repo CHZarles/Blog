@@ -77,14 +77,3 @@ python app.py --port 8086
 - 打印：About 页面支持浏览器打印为 PDF（含打印样式）
 - 登录：演示账号密码写在 `backend/app.py` 中，可按需替换
 
-## 推送到远程仓库
-
-```bash
-git remote add origin <your-remote-url>
-git branch -M master   # 或 main
-git push -u origin master
-```
-
-## 许可证
-
-此项目仅用于学习与演示用途。
