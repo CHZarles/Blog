@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Blogs - Admin</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <!-- Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>📝 Manage Blogs</h1>
+            <nav class="admin-nav">
+                <a href="/admin" class="nav-link">Dashboard</a>
+                <a href="/admin/manage" class="nav-link active">Manage Blogs</a>
+                <a href="/admin/create" class="nav-link">Create Blog</a>
+                <a href="/admin/import-export" class="nav-link">Import/Export</a>
+                <a href="/" class="nav-link">View Site</a>
+            </nav>
+        </header>
+        
+        <main class="page-main">
+            <div id="filter-section">
+                <h3>🔍 Filter Blogs</h3>
+                <div class="filter-controls">
+                    <div class="filter-input-container">
+                        <input type="text" id="filter-category" list="filter-category-suggestions" placeholder="Filter by category">
+                        <datalist id="filter-category-suggestions">
+                            <!-- Categories will be loaded dynamically -->
+                        </datalist>
+                    </div>
+                    <div class="filter-input-container">
+                        <input type="text" id="filter-tags" list="filter-tags-suggestions" placeholder="Filter by tags">
+                        <datalist id="filter-tags-suggestions">
+                            <!-- Tags will be loaded dynamically -->
+                        </datalist>
+                    </div>
+                    <button id="clear-filters">Clear Filters</button>
+                </div>
+            </div>
+            
+            <div id="blog-list-section">
+                <div class="blog-count" id="blog-count">Loading blogs...</div>
+                <div id="blogs-table-container">
+                    <table id="blogs-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Tags</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="blogs-tbody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Preview Modal -->
+        <div id="preview-modal" style="display: none;">
+            <div id="preview-content">
+                <div id="preview-header">
+                    <h3>Markdown Preview</h3>
+                    <button id="close-preview">Close</button>
+                </div>
+                <div id="preview-body"></div>
+            </div>
+        </div>
+
+    </div>
+    
+    <script src="/static/js/admin-manage.js"></script>
+</body>
+</html>

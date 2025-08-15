@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Blog - Admin</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <!-- Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>✍️ Create New Blog</h1>
+            <nav class="admin-nav">
+                <a href="/admin" class="nav-link">Dashboard</a>
+                <a href="/admin/manage" class="nav-link">Manage Blogs</a>
+                <a href="/admin/create" class="nav-link active">Create Blog</a>
+                <a href="/admin/import-export" class="nav-link">Import/Export</a>
+                <a href="/" class="nav-link">View Site</a>
+            </nav>
+        </header>
+        
+        <main class="page-main">
+            <div class="create-blog-container">
+                <div class="editor-section">
+                    <h3>📝 Blog Editor</h3>
+                    <form id="create-blog-form">
+                        <div class="form-group">
+                            <label for="blog-title">Title:</label>
+                            <input type="text" id="blog-title" required placeholder="Enter blog title">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="blog-category">Category:</label>
+                                <div class="category-input-container">
+                                    <input type="text" id="blog-category" list="category-suggestions" placeholder="选择或输入分类" autocomplete="off">
+                                    <datalist id="category-suggestions">
+                                        <!-- Categories will be loaded dynamically -->
+                                    </datalist>
+                                    <div class="category-hint">💡 可下拉选择已有分类，也可直接输入新分类</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="blog-tags">Tags:</label>
+                                <input type="text" id="blog-tags" placeholder="Comma separated tags">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="blog-content">Content (Markdown):</label>
+
+                            <div class="editor-container">
+                                <textarea id="blog-content" rows="20" required placeholder="Write your blog content in Markdown...
+
+# Example Heading
+
+This is a paragraph with **bold** and *italic* text.
+
+- List item 1
+- List item 2
+
+```javascript
+console.log('Code example');
+```"></textarea>
+                                <div id="preview-pane" class="preview-pane" style="display: none;">
+                                    <div class="markdown-content" id="preview-content">
+                                        <!-- Preview content will be rendered here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">📝 Create Blog</button>
+                            <button type="button" id="save-draft" class="btn-secondary">💾 Save Draft</button>
+                            <button type="reset" class="btn-secondary">🗑️ Clear Form</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div id="message-container" style="display: none;">
+                <div id="message" class="message"></div>
+            </div>
+        </main>
+    </div>
+    
+        <script src="/static/js/admin-create.js"></script>
+        <!-- Tagify for tag multi-select -->
+        <link rel="stylesheet" href="https://unpkg.com/@yaireo/tagify/dist/tagify.css">
+        <script src="https://unpkg.com/@yaireo/tagify"></script>
+        <script>
+        // 动态加载分类选项
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/categories')
+                .then(res => res.json())
+                .then(list => {
+                    const datalist = document.getElementById('category-suggestions');
+                    if (Array.isArray(list)) {
+                        datalist.innerHTML = list.map(cat => `<option value="${cat}"></option>`).join('');
+                    }
+                });
+                    // 加载现有标签列表
+                    fetch('/api/tags')
+                        .then(res => res.json())
+                        .then(tags => {
+                            const input = document.getElementById('blog-tags');
+                            const tagify = input._tagify; // Tagify实例
+                            if (tagify && Array.isArray(tags)) tagify.settings.whitelist = tags;
+                        });
+        });
+        </script>
+</body>
+</html>

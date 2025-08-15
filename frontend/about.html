@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About · 简历</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container resume-container" style="max-width: 980px;">
+    <section class="resume-hero geek-hero">
+        <div class="resume-hero-text geek-hero-text">
+            <h1 class="resume-name geek-name">Charles</h1>
+        </div>
+        <div id="github-commit-graph" class="github-graph-placeholder">
+            <img src="" alt="GitHub commit 活跃图">
+        </div>
+    </section>
+    <section class="resume-personal geek-personal">
+        <h2>👨‍💻 个人信息</h2>
+        <ul class="resume-list education-list">
+            <li>
+                <img src="/static/images/中国矿业大学-logo-1024px.png" alt="中国矿业大学" class="school-logo">
+                <span class="school-name">中国矿业大学 (2015-2019)</span>
+            </li>
+            <li>
+                <img src="/static/images/1024px-University_of_Macau_logo.svg.png" alt="澳门大学" class="school-logo">
+                <span class="school-name">澳门大学 (2019-2022)</span>
+            </li>
+            <li><span class="location-icon">📍</span>工作地点：上海 / 澳门</li>
+        </ul>
+    </section>
+    <section class="resume-grid">
+        <div class="resume-card">
+            <h2>🎯 概要</h2>
+            <ul class="resume-list">
+                <li>5+ 年服务端开发经验，熟悉分布式与高并发</li>
+                <li>擅长 C++/Python/JavaScript，追求代码质量与可维护性</li>
+                <li>关注用户体验，能将技术与产品设计融合</li>
+            </ul>
+        </div>
+        <div class="resume-card">
+            <h2>🧰 技术栈</h2>
+            <ul class="resume-list two-col">
+                <li>C++, Python, Go, JavaScript</li>
+                <li>Flask, FastAPI, Django</li>
+                <li>SQLite, MySQL, PostgreSQL, Redis</li>
+                <li>Linux, Docker, Git, CI/CD</li>
+            </ul>
+        </div>
+        <div class="resume-card">
+            <h2>💼 经历</h2>
+            <div class="resume-item">
+                <div class="item-head">
+                    <span class="item-title">后端工程师 · 某互联网公司</span>
+                    <span class="item-time">2022 — 至今</span>
+                </div>
+                <ul class="resume-list">
+                    <li>主导核心服务稳定性与性能优化，99.95% 可用性</li>
+                    <li>设计并落地异步任务系统，吞吐提升 3x</li>
+                    <li>建设监控告警闭环，故障恢复时间缩短 50%</li>
+                </ul>
+            </div>
+            <div class="resume-item">
+                <div class="item-head">
+                    <span class="item-title">全栈开发 · 初创项目</span>
+                    <span class="item-time">2020 — 2022</span>
+                </div>
+                <ul class="resume-list">
+                    <li>从零搭建博客/后台系统，端到端交付</li>
+                    <li>实现 Markdown 渲染、搜索与多端适配</li>
+                </ul>
+            </div>
+        </div>
+        <div class="resume-card">
+            <h2>🏆 项目</h2>
+            <ul class="resume-list">
+                <li>高性能日志采集与查询平台（C++/SQLite）</li>
+                <li>个人知识库与博客系统（Flask/JS）</li>
+                <li>轻量化数据可视化组件库（Web）</li>
+            </ul>
+        </div>
+        <div class="resume-card" id="contact">
+            <h2>📫 联系</h2>
+            <ul class="resume-list">
+                <li>GitHub：<a href="https://github.com/charles" target="_blank">github.com/charles</a></li>
+                <li>Email：<a href="mailto:you@example.com">you@example.com</a></li>
+                <li>LinkedIn：<a href="https://linkedin.com/in/yourprofile" target="_blank">/in/yourprofile</a></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- 悬浮返回按钮 -->
+    <a href="/" class="resume-fab" title="返回首页">🏠</a>
+    <button onclick="window.print()" class="resume-pdf-button" title="导出为 PDF">📄</button>
+</div>
+<script>
+    (function(){
+        function qs(name){
+            const m = location.search.match(new RegExp('[?&]'+name+'=([^&]+)'));
+            return m ? decodeURIComponent(m[1]) : null;
+        }
+        function loadData(){
+            if(qs('preview')==='1'){
+                try {
+                    const raw = localStorage.getItem('resume_preview');
+                    if (raw) return Promise.resolve(JSON.parse(raw));
+                } catch(e) {}
+            }
+            return fetch('/api/resume').then(r=>r.json());
+        }
+
+        function setText(sel, txt){ const el = document.querySelector(sel); if(el) el.textContent = txt || ''; }
+
+        loadData().then(data => {
+            setText('.resume-name', data.name);
+            setText('.resume-title', data.title);
+            setText('.resume-summary', data.summary);
+            const gh = document.querySelector('#github-commit-graph img');
+            if (gh) gh.src = `https://ghchart.rshah.org/${data.github_username || ''}`;
+
+            // Education + location
+            const educationList = document.querySelector('.education-list');
+            if (educationList) {
+                educationList.innerHTML = '';
+                (data.education || []).forEach(edu => {
+                    const li = document.createElement('li');
+                    const logo = edu.logo ? edu.logo : '/static/images/university-of-macau.svg';
+                    li.innerHTML = `<img src="${logo}" alt="" class="school-logo"> <span class="school-name">${edu.school || ''} (${edu.duration || ''})</span>`;
+                    educationList.appendChild(li);
+                });
+                const locationItem = document.createElement('li');
+                locationItem.innerHTML = `<span class="location-icon">📍</span>工作地点：${data.location || ''}`;
+                educationList.appendChild(locationItem);
+            }
+
+            // Clear default static cards then re-render dynamic sections: 概要/技术/经历/项目/联系
+            const grid = document.querySelector('.resume-grid');
+            if (grid) grid.innerHTML = '';
+
+            // 概要 -> 使用 data.summary 或保留列表
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'resume-card';
+            summaryCard.innerHTML = `<h2>🎯 概要</h2><p class="resume-summary">${(data.summary || '').replace(/</g,'&lt;')}</p>`;
+            grid.appendChild(summaryCard);
+
+            // 技术栈（技能徽章）
+            const skillsCard = document.createElement('div');
+            skillsCard.className = 'resume-card';
+            skillsCard.innerHTML = '<h2>🧰 技术栈</h2>';
+            const skillWrap = document.createElement('div');
+            skillWrap.style.display = 'flex';
+            skillWrap.style.flexWrap = 'wrap';
+            skillWrap.style.gap = '8px';
+            (data.skills || []).forEach(s => {
+                const b = document.createElement('span');
+                b.textContent = s;
+                b.style.padding = '6px 10px';
+                b.style.borderRadius = '999px';
+                b.style.background = '#f0fdf4';
+                b.style.color = '#166534';
+                b.style.border = '1px solid #bbf7d0';
+                b.style.fontSize = '12px';
+                skillWrap.appendChild(b);
+            });
+            skillsCard.appendChild(skillWrap);
+            grid.appendChild(skillsCard);
+
+            // 经历
+            const expCard = document.createElement('div');
+            expCard.className = 'resume-card';
+            expCard.innerHTML = '<h2>💼 经历</h2>';
+            (data.experience || []).forEach(exp => {
+                const item = document.createElement('div');
+                item.className = 'resume-item';
+                const title = exp.title || '';
+                const time = exp.duration || '';
+                const details = Array.isArray(exp.details) ? exp.details : [];
+                item.innerHTML = `<div class="item-head"><span class="item-title">${title}</span><span class="item-time">${time}</span></div>`;
+                const ul = document.createElement('ul');
+                ul.className = 'resume-list';
+                details.forEach(d => { const li = document.createElement('li'); li.textContent = d; ul.appendChild(li); });
+                item.appendChild(ul);
+                expCard.appendChild(item);
+            });
+            grid.appendChild(expCard);
+
+            // 项目
+            const projCard = document.createElement('div');
+            projCard.className = 'resume-card';
+            projCard.innerHTML = '<h2>🏆 项目</h2>';
+            const projList = document.createElement('div');
+            (data.projects || []).forEach(p => {
+                const wrap = document.createElement('div');
+                wrap.className = 'resume-item';
+                const head = document.createElement('div');
+                head.className = 'item-head';
+                const nm = document.createElement('span');
+                nm.className = 'item-title';
+                nm.textContent = p.name || '';
+                head.appendChild(nm);
+                if (p.link) {
+                    const a = document.createElement('a');
+                    a.href = p.link; a.textContent = '链接'; a.target = '_blank'; a.style.marginLeft = '8px';
+                    head.appendChild(a);
+                }
+                wrap.appendChild(head);
+                const ul = document.createElement('ul');
+                ul.className = 'resume-list';
+                const desc = Array.isArray(p.description) ? p.description : [];
+                desc.forEach(line => { const li = document.createElement('li'); li.textContent = line; ul.appendChild(li); });
+                if (Array.isArray(p.tech) && p.tech.length) {
+                    const li = document.createElement('li');
+                    const label = document.createElement('span');
+                    label.textContent = '技术: ';
+                    li.appendChild(label);
+                    const badgeWrap = document.createElement('span');
+                    badgeWrap.style.display = 'inline-flex';
+                    badgeWrap.style.flexWrap = 'wrap';
+                    badgeWrap.style.gap = '6px';
+                    p.tech.forEach(t => {
+                        const b = document.createElement('span');
+                        b.textContent = t;
+                        b.style.padding = '2px 8px';
+                        b.style.borderRadius = '999px';
+                        b.style.background = '#eef2ff';
+                        b.style.color = '#3730a3';
+                        b.style.border = '1px solid #c7d2fe';
+                        b.style.fontSize = '12px';
+                        badgeWrap.appendChild(b);
+                    });
+                    li.appendChild(badgeWrap);
+                    ul.appendChild(li);
+                }
+                wrap.appendChild(ul);
+                projList.appendChild(wrap);
+            });
+            projCard.appendChild(projList);
+            grid.appendChild(projCard);
+
+            // 联系
+            const contactCard = document.createElement('div');
+            contactCard.className = 'resume-card';
+            contactCard.id = 'contact';
+            contactCard.innerHTML = '<h2>📫 联系</h2>';
+            const contactList = document.createElement('ul');
+            contactList.className = 'resume-list';
+            if (data.contact && data.contact.github) {
+                const li = document.createElement('li');
+                const a = document.createElement('a'); a.href = `https://github.com/${data.contact.github}`; a.textContent = `github.com/${data.contact.github}`; a.target = '_blank';
+                li.textContent = 'GitHub：'; li.appendChild(a); contactList.appendChild(li);
+            }
+            if (data.contact && data.contact.email) {
+                const li = document.createElement('li');
+                const a = document.createElement('a'); a.href = `mailto:${data.contact.email}`; a.textContent = data.contact.email;
+                li.textContent = 'Email：'; li.appendChild(a); contactList.appendChild(li);
+            }
+            if (data.contact && data.contact.linkedin) {
+                const li = document.createElement('li');
+                const a = document.createElement('a'); a.href = `https://linkedin.com/in/${data.contact.linkedin}`; a.target = '_blank'; a.textContent = `/in/${data.contact.linkedin}`;
+                li.textContent = 'LinkedIn：'; li.appendChild(a); contactList.appendChild(li);
+            }
+            contactCard.appendChild(contactList);
+            grid.appendChild(contactCard);
+        });
+    })();
+</script>
+</body>
+</html>

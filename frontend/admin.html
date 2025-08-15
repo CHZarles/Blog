@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>📊 Blog Admin Dashboard</h1>
+            <nav class="admin-nav">
+                <a href="/admin" class="nav-link active">Dashboard</a>
+                <a href="/admin/manage" class="nav-link">Manage Blogs</a>
+                <a href="/admin/create" class="nav-link">Create Blog</a>
+                <a href="/admin/resume" class="nav-link">Edit Resume</a>
+                <a href="/admin/import-export" class="nav-link">Import/Export</a>
+                <a href="/" class="nav-link">View Site</a>
+            </nav>
+        </header>
+        
+        <main class="dashboard-main">
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="card-icon">📝</div>
+                    <h3>Manage Blogs</h3>
+                    <p>View, edit, and delete existing blog posts. Filter by category or tags.</p>
+                    <a href="/admin/manage" class="card-button">Go to Management</a>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-icon">✍️</div>
+                    <h3>Create New Blog</h3>
+                    <p>Write and publish new blog posts with markdown support and preview.</p>
+                    <a href="/admin/create" class="card-button">Create Blog</a>
+                </div>
+                
+                <div class="dashboard-card">
+                    <div class="card-icon">📄</div>
+                    <h3>Edit Resume</h3>
+                    <p>Update your personal resume information, including skills and experience.</p>
+                    <a href="/admin/resume" class="card-button">Edit Resume</a>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="card-icon">📁</div>
+                    <h3>Import & Export</h3>
+                    <p>Import blogs from markdown files or folders, export as ZIP with categories.</p>
+                    <a href="/admin/import-export" class="card-button">Import/Export</a>
+                </div>
+                
+                <div class="dashboard-card stats-card">
+                    <div class="card-icon">📊</div>
+                    <h3>Blog Statistics</h3>
+                    <div class="stats-content">
+                        <div class="stat-item">
+                            <span class="stat-number" id="total-blogs">-</span>
+                            <span class="stat-label">Total Blogs</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="total-categories">-</span>
+                            <span class="stat-label">Categories</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/static/js/admin-dashboard.js"></script>
+</body>
+</html>

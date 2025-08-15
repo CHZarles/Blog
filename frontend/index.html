@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charles's Digital Garden · Python 博客 · 技术与灵感</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/xcode.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 style="font-size:2.2em;font-weight:900;letter-spacing:0.5px;line-height:1.15;margin-bottom:6px;">
+            <span style="vertical-align:-2px;">🐬</span> 保持热爱 · 奔赴山海
+            <span style="display:inline-block;font-size:0.55em;font-weight:500;color:#2563eb;margin-left:10px;vertical-align:middle;letter-spacing:0.2px;">A Place for Thoughts, Stories, and Growth</span>
+        </h1>
+        
+        <p class="subtitle">我盼的是梁园月，渴的是东京酒，寻的是洛阳花，撰的是章台柳。</p>
+        
+        <p class="recent-changes">
+            <a href="#recent">📜 list</a>| <span id="current-time"></span> |
+            <a href="https://github.com/charles" target="_blank" aria-label="GitHub">
+                <svg role="img" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <title>GitHub</title>
+                    <path fill="currentColor" d="M12 .297C5.37.297 0 5.667 0 12.3c0 5.302 3.438 9.8 8.205 11.387.6.111.82-.26.82-.578 0-.286-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.389-1.333-1.76-1.333-1.76-1.09-.744.083-.729.083-.729 1.205.085 1.84 1.238 1.84 1.238 1.07 1.836 2.807 1.306 3.492.998.108-.776.418-1.306.76-1.606-2.665-.304-5.466-1.334-5.466-5.93 0-1.31.467-2.382 1.235-3.222-.124-.303-.536-1.523.117-3.176 0 0 1.008-.322 3.3 1.23.957-.266 1.984-.399 3.005-.404 1.02.005 2.047.138 3.006.404 2.29-1.552 3.296-1.23 3.296-1.23.655 1.653.243 2.873.12 3.176.77.84 1.233 1.912 1.233 3.222 0 4.61-2.804 5.624-5.476 5.92.43.37.813 1.102.813 2.222 0 1.606-.015 2.896-.015 3.29 0 .32.216.694.825.576C20.565 22.096 24 17.6 24 12.3 24 5.667 18.627.297 12 .297z"/>
+                </svg>
+            </a>
+            |
+            <a href="https://www.zhihu.com" target="_blank" aria-label="Zhihu">
+                <img src="https://cdn.simpleicons.org/zhihu/1d4ed8" width="18" height="18" alt="" />
+            </a>
+            |
+            <a href="/about" aria-label="Gmail">
+                <svg role="img" viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <title>author</title>
+                    <path fill="currentColor" d="M22.5 0h-21A1.5 1.5 0 000 1.5v21A1.5 1.5 0 001.5 24h21a1.5 1.5 0 001.5-1.5v-21A1.5 1.5 0 0022.5 0zm-1.846 6.33V20.5h-3.21V9.544l-5.944 4.28-5.944-4.28V20.5H2.403V6.33l7.097 5.112 7.154-5.112z"/>
+                </svg>
+            </a>
+        </p>
+        <div class="hero-meta" aria-hidden="true">
+            <span class="hero-chip"><span class="dot"></span> Clean · Minimal</span>
+            <span class="hero-chip"><span class="dot"></span> Markdown + Highlight.js</span>
+            <span class="hero-chip"><span class="dot"></span> Flask · SQLite</span>
+        </div>
+        <div class="card-modules">
+            <div class="card-module inspiration">
+                <div class="card-title">🌈 Inspiration of the Day</div>
+                <div class="card-quote">“Simplicity is the ultimate sophistication.”</div>
+                <div class="card-quote-author">— Leonardo da Vinci</div>
+            </div>
+            <div class="card-module stats">
+                <div class="card-title">📊 Quick Stats</div>
+                <div class="card-stats">
+                    <span class="stat"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 12H9v-2h2v2zm0-4H9V6h2v4z"/></svg>上线天数 128</span>
+                    <span class="stat"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5zm2 2v2h2V7H6zm0 4v2h2v-2H6zm4-4v2h2V7h-2zm0 4v2h2v-2h-2z"/></svg>文章 42</span>
+                    <span class="stat"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zm3 9H7v-2h6v2z"/></svg>标签 18</span>
+                    <span class="stat" id="weather-stat"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M6.995 12a5 5 0 119.9 0A4 4 0 1110 18a4 4 0 01-3.005-6z"/></svg>今日天气加载中…</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-layout">
+            <!-- 左侧快捷链接 - 显示分类 -->
+            <div class="shortcuts">
+                <h3>Shortcuts</h3>
+                <div class="shortcut-links" id="shortcut-links">
+                    <!-- 动态生成的分类快捷链接 -->
+                </div>
+                
+                <!-- 文章详情页时的标签区域 -->
+                <div id="left-tags" style="display: none;">
+                    <h3>Tags</h3>
+                    <div class="tag-links" id="left-tag-links">
+                        <!-- 动态生成的标签链接 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 主要内容区域 -->
+            <div class="main-content">
+                <!-- 首页内容 -->
+                <section id="home-section" class="content-section active">
+                    <div class="category-section">
+                        <!-- 动态生成的分类和文章列表 -->
+                        <div id="dynamic-categories">
+                            <!-- 分类内容将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 博客详情页 -->
+                <section id="blog-detail" class="content-section">
+                    <div id="blog-detail-content">
+                        <!-- 博客详情内容将通过JavaScript动态加载 -->
+                    </div>
+                </section>
+
+                <!-- About页面 -->
+                <section id="about-section" class="content-section">
+                    <div id="about-content">
+                        <!-- About页面内容 -->
+                    </div>
+                </section>
+            </div>
+            
+            <!-- 右侧标签区域 -->
+            <div class="sidebar-right">
+                <div id="right-tags">
+                    <h3>Tags</h3>
+                    <div class="tag-links" id="tag-links">
+                        <!-- 动态生成的标签链接 -->
+                    </div>
+                </div>
+                
+                <!-- 文章目录区域 -->
+                <div id="article-toc" style="display: none;">
+                    <h3>目录</h3>
+                    <div class="toc-links" id="toc-links">
+                        <!-- 动态生成的目录链接 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/weather.js"></script>
+</body>
+    <footer style="width:100%;text-align:center;margin-top:4rem;margin-bottom:1.5rem;">
+            <a href="/login" style="font-size:18px;color:#b0b0b0;text-decoration:none;opacity:0.4;transition:opacity .2s,color .2s;vertical-align:middle;" title="" aria-label="设置" onmouseover="this.style.opacity=1;this.style.color='#667eea'" onmouseout="this.style.opacity=0.4;this.style.color='#b0b0b0'">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><circle cx="10" cy="10" r="3.5"/><path d="M10 2v2M10 16v2M4.93 4.93l1.42 1.42M13.65 13.65l1.42 1.42M2 10h2m12 0h2M4.93 15.07l1.42-1.42M13.65 6.35l1.42-1.42"/></svg>
+            </a>
+    </footer>
+</html>

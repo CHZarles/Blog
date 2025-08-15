@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# SQLite DB
+instance/*.sqlite
+*.sqlite
+
+# PyCharm/VSCode
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# node
+node_modules/
+
+# logs
+*.log
+
+# coverage
+htmlcov/
+.coverage
+
+# compiled
+*.class
+
+# local env files
+.env
+
+# static uploads, generated files
+frontend/static/images/uploads/
+
+# other
+*.bak
+*.swp

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑简历 - Admin</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>编辑简历</h1>
+            <nav class="admin-nav">
+                <a class="nav-link" href="/admin">返回仪表盘</a>
+                <a class="nav-link" href="/">查看网站</a>
+            </nav>
+        </header>
+
+        <main class="page-main">
+            <div class="section-card">
+                <div class="top-actions" style="display:flex;justify-content:space-between;align-items:center; gap:12px;">
+                    <h2>基本信息</h2>
+                    <div>
+                        <button id="preview-about" type="button" class="btn-secondary">预览 About</button>
+                        <button id="save-top" type="button" class="btn-primary">保存</button>
+                    </div>
+                </div>
+
+                <form id="resume-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">姓名</label>
+                            <input type="text" id="name" name="name" placeholder="姓名">
+                        </div>
+                        <div class="form-group">
+                            <label for="title">头衔 / 职位</label>
+                            <input type="text" id="title" name="title" placeholder="例如：软件工程师">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="summary">简介</label>
+                        <textarea id="summary" name="summary" placeholder="一句话概述你的定位和擅长领域"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="github_username">GitHub 用户名</label>
+                            <input type="text" id="github_username" name="github_username" placeholder="用户名">
+                        </div>
+                        <div class="form-group">
+                            <label for="location">工作地点</label>
+                            <input type="text" id="location" name="location" placeholder="城市 / 国家">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skills">技能 (逗号分隔)</label>
+                        <input type="text" id="skills" name="skills" placeholder="Python, Flask, SQL, ...">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact_github">联系人 - GitHub</label>
+                            <input type="text" id="contact_github" name="contact_github">
+                        </div>
+                        <div class="form-group">
+                            <label for="contact_email">联系人 - Email</label>
+                            <input type="text" id="contact_email" name="contact_email">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact_linkedin">联系人 - LinkedIn</label>
+                        <input type="text" id="contact_linkedin" name="contact_linkedin">
+                    </div>
+                </form>
+            </div>
+
+            <div class="section-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h2>教育背景</h2>
+                    <button type="button" id="add-education" class="btn-secondary">添加教育</button>
+                </div>
+                <div id="education-container"></div>
+            </div>
+
+            <div class="section-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h2>工作经历</h2>
+                    <button type="button" id="add-experience" class="btn-secondary">添加经历</button>
+                </div>
+                <div id="experience-container"></div>
+            </div>
+
+            <div class="section-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <h2>项目</h2>
+                    <button type="button" id="add-project" class="btn-secondary">添加项目</button>
+                </div>
+                <div id="projects-container"></div>
+            </div>
+
+            <div class="form-actions">
+                <button id="save-bottom" type="button" class="btn-primary">保存全部</button>
+                <a href="/admin" class="btn-secondary">取消</a>
+                <span id="save-status" style="align-self:center;color:#2c3e50;margin-left:6px;display:none;"></span>
+            </div>
+        </main>
+    </div>
+    <script src="/static/js/admin-resume.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Blog - Admin</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- Tagify for tag multi-select -->
+    <link rel="stylesheet" href="https://unpkg.com/@yaireo/tagify/dist/tagify.css">
+    <script src="https://unpkg.com/@yaireo/tagify"></script>
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>✏️ Edit Blog</h1>
+            <nav class="admin-nav">
+                <a href="/admin" class="nav-link">Dashboard</a>
+                <a href="/admin/manage" class="nav-link">Manage Blogs</a>
+                <a href="/admin/create" class="nav-link">Create Blog</a>
+                <a href="/admin/import-export" class="nav-link">Import/Export</a>
+                <a href="/" class="nav-link">View Site</a>
+            </nav>
+        </header>
+        
+        <main class="page-main">
+            <div class="section-card">
+                <div class="editor-header">
+                    <h2>Edit Blog Post</h2>
+                    <div class="editor-actions">
+                        <button id="preview-toggle" type="button" class="btn-secondary">👁️ Preview</button>
+                        <a href="/admin/manage" class="btn-secondary">← Back to List</a>
+                    </div>
+                </div>
+                
+                <form id="edit-blog-form">
+                    <input type="hidden" id="blog-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="blog-title">Title *</label>
+                            <input type="text" id="blog-title" required placeholder="Enter blog title...">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="blog-category">Category</label>
+                            <div class="category-input-container">
+                                <input type="text" id="blog-category" list="category-suggestions" placeholder="Select existing or create new category">
+                                <datalist id="category-suggestions">
+                                    <!-- Categories will be loaded dynamically -->
+                                </datalist>
+                                <div class="category-hint">💡 Start typing to see existing categories or enter a new one</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="blog-tags">Tags</label>
+                            <input type="text" id="blog-tags" placeholder="Comma separated tags">
+                        </div>
+                    </div>
+                    
+                    <div class="editor-container">
+                        <textarea id="blog-content"  required placeholder="Write your blog content in Markdown..."></textarea>
+                        <div id="preview-pane" class="preview-pane" style="display: none;">
+                            <h4>Preview</h4>
+                            <div id="edit-preview-content" class="markdown-content"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">💾 Update Blog</button>
+                        <button type="button" id="save-draft" class="btn-secondary">📝 Save as Draft</button>
+                        <a href="/admin/manage" class="btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div id="message-container" style="display: none;">
+                <div id="message" class="message"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/static/js/admin-edit.js"></script>
+</body>
+</html>

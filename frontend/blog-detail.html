@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Detail</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/blog-detail.css">
+    <!-- Markdown解析库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 代码高亮库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/xcode.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- 动画库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body>
+    <!-- 页面加载动画 -->
+    <div id="page-loader" class="page-loader hidden">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p class="loader-text">Loading article...</p>
+            <div class="loader-progress">
+                <div class="loader-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 返回按钮 -->
+    <a href="#" id="back-to-home" class="back-button animate__animated animate__fadeInLeft">
+        <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Back</span>
+    </a>
+
+    <!-- 阅读进度条 -->
+    <div id="reading-progress" class="reading-progress"></div>
+
+    <!-- 主容器 -->
+    <div class="blog-detail-container">
+        <!-- 文章头部 -->
+        <header class="article-header animate__animated animate__fadeInUp">
+            <div class="article-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Category</span>
+                    <span class="meta-value" id="article-category">Loading...</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Published</span>
+                    <span class="meta-value" id="article-date">Loading...</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Reading Time</span>
+                    <span class="meta-value" id="reading-time">~ min read</span>
+                </div>
+            </div>
+            <h1 class="article-title" id="article-title">Loading Article...</h1>
+            <div class="article-tags" id="article-tags">
+                <!-- Tags will be dynamically inserted -->
+            </div>
+        </header>
+
+        <!-- 文章内容区域 -->
+        <div class="article-layout">
+            <!-- 主要内容 -->
+            <main class="article-content animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="content-wrapper" id="article-content">
+                    <!-- Article content will be loaded here -->
+                    <div class="content-skeleton">
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 侧边栏 -->
+            <aside class="article-sidebar animate__animated animate__fadeInRight animate__delay-2s">
+                <!-- 目录 -->
+                <div class="sidebar-section toc-section" id="toc-section" style="display: none;">
+                    <h3 class="sidebar-title">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M3 6h18M3 12h18M3 18h18"/>
+                        </svg>
+                        Table of Contents
+                    </h3>
+                    <nav class="toc-nav" id="toc-nav">
+                        <!-- TOC will be generated here -->
+                    </nav>
+                </div>
+
+                <!-- 相关文章 -->
+                <div class="sidebar-section related-section">
+                    <h3 class="sidebar-title">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
+                        Related Articles
+                    </h3>
+                    <div class="related-articles" id="related-articles">
+                        <!-- Related articles will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- 文章统计 -->
+                <div class="sidebar-section stats-section">
+                    <h3 class="sidebar-title">
+                        <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 19c-5 0-8-3-8-6s3-6 8-6c5 0 8 3 8 6s-3 6-8 6z"/>
+                            <path d="M17 11c1.5 0 3 1.2 3 3s-1.5 3-3 3c-1.5 0-3-1.2-3-3s1.5-3 3-3z"/>
+                        </svg>
+                        Article Stats
+                    </h3>
+                    <div class="article-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Words</span>
+                            <span class="stat-value" id="word-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Characters</span>
+                            <span class="stat-value" id="char-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Paragraphs</span>
+                            <span class="stat-value" id="paragraph-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <button id="scroll-to-top" class="scroll-to-top" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M18 15l-6-6-6 6"/>
+        </svg>
+    </button>
+
+    <!-- JavaScript -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/blog-detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import & Export - Admin</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <!-- JSZip库用于创建ZIP文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div id="admin-app">
+        <header class="admin-header">
+            <h1>📁 Import & Export</h1>
+            <nav class="admin-nav">
+                <a href="/admin" class="nav-link">Dashboard</a>
+                <a href="/admin/manage" class="nav-link">Manage Blogs</a>
+                <a href="/admin/create" class="nav-link">Create Blog</a>
+                <a href="/admin/import-export" class="nav-link active">Import/Export</a>
+                <a href="/" class="nav-link">View Site</a>
+            </nav>
+        </header>
+        
+        <main class="page-main">
+            <div class="import-export-container">
+                <!-- Import Section -->
+                <div class="section-card">
+                    <h3>📥 Import Blogs</h3>
+                    <p>Import blog posts from Markdown files or entire folders.</p>
+                    
+                    <div class="import-options">
+                        <div class="import-option">
+                            <h4>📄 Import Single File</h4>
+                            <p>Import a single Markdown (.md) file as a blog post.</p>
+                            <input type="file" id="import-file" accept=".md" style="display: none;">
+                            <button id="import-blog" class="btn-primary">Choose Markdown File</button>
+                        </div>
+                        
+                        <div class="import-option">
+                            <h4>📁 Import Folder</h4>
+                            <p>Import all Markdown files from a folder. Folder structure will be used as categories.</p>
+                            <input type="file" id="import-folder" webkitdirectory style="display: none;">
+                            <button id="import-folder-btn" class="btn-primary">Choose Folder</button>
+                        </div>
+                    </div>
+                    
+                    <div id="import-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <div id="import-status" class="import-status">Importing...</div>
+                    </div>
+                </div>
+                
+                <!-- Export Section -->
+                <div class="section-card">
+                    <h3>📤 Export Blogs</h3>
+                    <p>Export your blog posts as Markdown files or organized ZIP archives.</p>
+                    
+                    <div class="export-options">
+                        <div class="export-option">
+                            <h4>📦 Export All Blogs</h4>
+                            <p>Export all blogs as a ZIP file organized by categories.</p>
+                            <button id="export-blog" class="btn-primary">Export to ZIP</button>
+                        </div>
+                        
+                        <div class="export-option">
+                            <h4>🎯 Export by Category</h4>
+                            <div class="category-export">
+                                <select id="category-select">
+                                    <option value="">Select a category...</option>
+                                </select>
+                                <button id="export-category" class="btn-secondary">Export Category</button>
+                            </div>
+                        </div>
+                        
+                        <div class="export-option">
+                            <h4>📊 Export Statistics</h4>
+                            <p>Export blog statistics and metadata as JSON.</p>
+                            <button id="export-stats" class="btn-secondary">Export Stats</button>
+                        </div>
+                    </div>
+                    
+                    <div id="export-progress" style="display: none;">
+                        <div class="progress-bar">
+                            <div id="export-progress-fill" class="progress-fill"></div>
+                        </div>
+                        <div id="export-status" class="export-status">Preparing export...</div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="section-card">
+                    <h3>📋 Recent Activity</h3>
+                    <div id="activity-log">
+                        <p class="no-activity">No recent import/export activity.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Success/Error Messages -->
+            <div id="message-container" style="display: none;">
+                <div id="message" class="message"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/static/js/admin-import-export.js"></script>
+</body>
+</html>
