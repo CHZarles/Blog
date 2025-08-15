@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, request, render_template, Response, session, redirect, url_for
+from flask_cors import CORS
 from database import db_session
 from models import Blog, Resume
 import markdown
@@ -35,6 +36,11 @@ def create_app():
     # 简易管理员账号（演示用）
     ADMIN_USERNAME = 'admin'
     ADMIN_PASSWORD = '123456'
+
+    # Enable CORS: allow cross-origin requests to API endpoints. We allow credentials
+    # so the admin session cookie can be sent from same-origin admin UI when needed.
+    # For production, restrict origins explicitly (CORS resources list).
+    CORS(app, resources={r"/api/*": {"origins": "*"}, r"/admin/*": {"origins": "*"}}, supports_credentials=True)
 
     # 兼容老前端: /api/blog/<id>
     @app.route('/api/blog/<int:blog_id>', methods=['GET'])
