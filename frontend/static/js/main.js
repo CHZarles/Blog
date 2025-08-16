@@ -815,6 +815,47 @@ function generateShortcutLinks(blogs) {
     }
 }
 
+// Helper: normalize a tag item which may be a string or an object from Tagify
+function normalizeTagItem(item) {
+    if (!item && item !== 0) return '';
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object') return (item.value || item.Value || item.name || '').toString();
+    return String(item);
+}
+
+// Helper: parse tags field which may be array, JSON string of objects/strings, or CSV
+function parseTagsField(tagsField) {
+    if (!tagsField) return [];
+    if (Array.isArray(tagsField)) return tagsField.map(normalizeTagItem).filter(Boolean);
+    if (typeof tagsField === 'string') {
+        // try parse JSON
+        try {
+            const parsed = JSON.parse(tagsField);
+            if (Array.isArray(parsed)) return parsed.map(normalizeTagItem).filter(Boolean);
+        } catch (e) {
+            // fallback to CSV
+            return tagsField.split(',').map(s => s.trim()).filter(Boolean);
+        }
+    }
+    return [];
+}
+
+// Helper: normalize category which may be string, JSON array/object, or Tagify object
+function normalizeCategoryField(cat) {
+    if (!cat) return '';
+    if (typeof cat === 'string') {
+        try {
+            const parsed = JSON.parse(cat);
+            if (Array.isArray(parsed) && parsed.length > 0) return normalizeTagItem(parsed[0]);
+            if (typeof parsed === 'object') return normalizeTagItem(parsed);
+        } catch (e) {
+            return cat;
+        }
+    }
+    if (typeof cat === 'object') return normalizeTagItem(cat);
+    return String(cat);
+}
+
 // 生成右侧标签链接（带缓存）
 let tagLinksCache = null;
 let tagLinksCacheKey = '';
@@ -840,22 +881,8 @@ function generateTagLinks(blogs) {
     const allTags = new Set();
     
     blogs.forEach(blog => {
-        if (blog.tags) {
-            if (Array.isArray(blog.tags)) {
-                // 如果已经是数组格式
-                blog.tags.forEach(tag => allTags.add(tag));
-            } else if (typeof blog.tags === 'string') {
-                try {
-                    // 尝试解析JSON格式的标签
-                    const tags = JSON.parse(blog.tags);
-                    tags.forEach(tag => allTags.add(tag));
-                } catch (e) {
-                    // 如果解析失败，尝试按逗号分割
-                    const tags = blog.tags.split(',').map(tag => tag.trim());
-                    tags.forEach(tag => allTags.add(tag));
-                }
-            }
-        }
+        const parsed = parseTagsField(blog.tags);
+        parsed.forEach(tag => allTags.add(tag));
     });
     
     const sortedTags = Array.from(allTags).sort();
@@ -1099,20 +1126,9 @@ function createBlogItem(blog) {
     const title = escapeHtml(blog.title || 'Untitled');
     
     let tags = '';
-    if (blog.tags) {
-        if (Array.isArray(blog.tags)) {
-            // 如果已经是数组格式
-            tags = blog.tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
-        } else if (typeof blog.tags === 'string') {
-            try {
-                // 尝试解析JSON格式的标签
-                const tagArray = JSON.parse(blog.tags);
-                tags = tagArray.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
-            } catch (e) {
-                // 如果解析失败，尝试按逗号分割
-                tags = blog.tags.split(',').map(tag => `<span class="tag">${escapeHtml(tag.trim())}</span>`).join('');
-            }
-        }
+    const parsedTags = parseTagsField(blog.tags);
+    if (parsedTags.length > 0) {
+        tags = parsedTags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
     }
     
     const blogItemHTML = `

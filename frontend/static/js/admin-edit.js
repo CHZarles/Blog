@@ -125,6 +125,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Helper: normalize Tagify input values (handles Tagify's JSON string and plain CSV)
+function parseTagifyToArray(val) {
+    if (!val) return [];
+    try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) {
+            return parsed.map(item => {
+                if (typeof item === 'string') return item;
+                return (item.value || item.Value || item.name || '').toString();
+            }).filter(Boolean);
+        }
+    } catch (e) {}
+    return val.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function tagArrayToString(arr) {
+    if (!arr || arr.length === 0) return '';
+    return arr.join(', ');
+}
+
 function loadBlogData() {
     fetch(`/api/blogs/${currentBlogId}`)
         .then(response => {
@@ -159,26 +179,9 @@ function loadBlogData() {
 function updateBlog(e) {
     e.preventDefault();
 
-    // 处理 Tagify 返回的 JSON 格式内容
-    let tagsInput = blogTags.value.trim();
-    try {
-        const tagsArray = JSON.parse(tagsInput);
-        if (Array.isArray(tagsArray)) {
-            tagsInput = tagsArray.map(item => item.value).join(', ');
-        }
-    } catch (err) {
-        // 若解析失败，则保持原值
-    }
-
-    let categoryInput = blogCategory.value.trim();
-    try {
-        const categoryArray = JSON.parse(categoryInput);
-        if (Array.isArray(categoryArray)) {
-            categoryInput = categoryArray.length > 0 ? categoryArray[0].value : '';
-        }
-    } catch (err) {
-        // 若解析失败，则保持原值
-    }
+    // Normalize Tagify inputs to plain strings
+    const tagsInput = tagArrayToString(parseTagifyToArray(blogTags.value.trim()));
+    const categoryInput = tagArrayToString(parseTagifyToArray(blogCategory.value.trim())).split(',')[0] || '';
 
     const blogData = {
         title: blogTitle.value.trim(),

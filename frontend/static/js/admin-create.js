@@ -85,13 +85,39 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDraft();
 });
 
+// Helper: normalize Tagify input values (handles Tagify's JSON string and plain CSV)
+function parseTagifyToArray(val) {
+    if (!val) return [];
+    // If Tagify serialized JSON like [{"value":"x"}, ...]
+    try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) {
+            return parsed.map(item => {
+                if (typeof item === 'string') return item;
+                return (item.value || item.Value || item.name || '').toString();
+            }).filter(Boolean);
+        }
+    } catch (e) {
+        // not JSON, fall back
+    }
+    // If plain string (comma separated)
+    return val.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function tagArrayToString(arr) {
+    if (!arr || arr.length === 0) return '';
+    return arr.join(', ');
+}
+
 function createBlog(e) {
     e.preventDefault();
     
     const blogData = {
         title: blogTitle.value.trim(),
-        category: blogCategory.value.trim(),
-        tags: blogTags.value.trim(),
+        // convert Tagify/category to plain string (single value)
+        category: tagArrayToString(parseTagifyToArray(blogCategory.value.trim())).trim(),
+        // convert Tagify tags to comma separated string
+        tags: tagArrayToString(parseTagifyToArray(blogTags.value.trim())),
         content: blogContent.value.trim()
     };
     
@@ -180,8 +206,8 @@ function updatePreview() {
                 previewContent.innerHTML = `
                     <div class="blog-meta-preview">
                         <h2>${escapeHtml(blogTitle.value || 'Blog Title')}</h2>
-                        <p><strong>Category:</strong> ${escapeHtml(blogCategory.value || 'Uncategorized')}</p>
-                        <p><strong>Tags:</strong> ${escapeHtml(blogTags.value || 'No tags')}</p>
+                                        <p><strong>Category:</strong> ${escapeHtml(tagArrayToString(parseTagifyToArray(blogCategory.value)) || 'Uncategorized')}</p>
+                                        <p><strong>Tags:</strong> ${escapeHtml(tagArrayToString(parseTagifyToArray(blogTags.value)) || 'No tags')}</p>
                         <hr>
                     </div>
                     <div class="markdown-content">
@@ -316,8 +342,8 @@ function insertAtCursor(textarea, text) {
 function saveDraft() {
     const draftData = {
         title: blogTitle.value,
-        category: blogCategory.value,
-        tags: blogTags.value,
+        category: tagArrayToString(parseTagifyToArray(blogCategory.value)),
+        tags: tagArrayToString(parseTagifyToArray(blogTags.value)),
         content: blogContent.value,
         timestamp: new Date().toISOString()
     };
@@ -355,6 +381,7 @@ function loadDraft() {
 
 function clearDraft() {
     localStorage.removeItem('blog-draft');
+    localStorage.removeItem('blog_draft');
 }
 
 // Auto-save draft every 30 seconds

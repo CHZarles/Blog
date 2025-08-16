@@ -42,6 +42,11 @@ def create_app():
     # For production, restrict origins explicitly (CORS resources list).
     CORS(app, resources={r"/api/*": {"origins": "*"}, r"/admin/*": {"origins": "*"}}, supports_credentials=True)
 
+    # Ensure database tables exist. This will create tables on first run when the
+    # `instance/blog.sqlite` file is missing or empty.
+    from database import init_db
+    init_db()
+
     # 兼容老前端: /api/blog/<id>
     @app.route('/api/blog/<int:blog_id>', methods=['GET'])
     def get_blog_compat(blog_id):
@@ -351,31 +356,8 @@ def create_app():
     def get_resume():
         resume = db_session.query(Resume).first()
         if not resume:
-            # Create a default resume if none exists
-            resume = Resume(
-                name="Charles",
-                title="Software Engineer · Backend / Full‑Stack",
-                summary="专注高性能后端与优雅产品体验。热爱系统设计、数据库与工程效率。",
-                github_username="CHZarles",
-                education=[
-                    {"school": "中国矿业大学", "duration": "2015-2019"},
-                    {"school": "澳门大学", "duration": "2019-2022"}
-                ],
-                location="上海 / 澳门",
-                experience=[
-                    {"title": "后端工程师 · 某互联网公司", "duration": "2022 — 至今", "details": ["主导核心服务稳定性与性能优化，99.95% 可用性", "设计并落地异步任务系统，吞吐提升 3x", "建设监控告警闭环，故障恢复时间缩短 50%"]},
-                    {"title": "全栈开发 · 初创项目", "duration": "2020 — 2022", "details": ["从零搭建博客/后台系统，端到端交付", "实现 Markdown 渲染、搜索与多端适配"]}
-                ],
-                projects=[
-                    {"name": "高性能日志采集与查询平台（C++/SQLite）"},
-                    {"name": "个人知识库与博客系统（Flask/JS）"},
-                    {"name": "轻量化数据可视化组件库（Web）"}
-                ],
-                skills=["C++", "Python", "Go", "JavaScript", "Flask", "FastAPI", "Django", "SQLite", "MySQL", "PostgreSQL", "Redis", "Linux", "Docker", "Git", "CI/CD"],
-                contact={"github": "https://github.com/charles", "email": "you@example.com", "linkedin": "https://linkedin.com/in/yourprofile"}
-            )
-            db_session.add(resume)
-            db_session.commit()
+            # Do not auto-create a resume. Return 404 to indicate no resume exists.
+            return jsonify({}), 404
         return jsonify(resume.to_dict())
 
     @app.route('/api/resume', methods=['PUT'])
@@ -383,10 +365,13 @@ def create_app():
         data = request.get_json()
         resume = db_session.query(Resume).first()
         if not resume:
-            return jsonify({"error": "Resume not found"}), 404
-        
-        for key, value in data.items():
-            setattr(resume, key, value)
+            # If no resume exists, create a new one
+            resume = Resume(**data)
+            db_session.add(resume)
+        else:
+            # If resume exists, update it
+            for key, value in data.items():
+                setattr(resume, key, value)
         
         db_session.commit()
         return jsonify({"message": "Resume updated successfully"})

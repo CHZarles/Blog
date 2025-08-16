@@ -11,86 +11,28 @@
 </head>
 <body>
 <div class="container resume-container" style="max-width: 980px;">
+    <!-- Hero: name/title and GitHub graph (populated from API/preview) -->
     <section class="resume-hero geek-hero">
         <div class="resume-hero-text geek-hero-text">
-            <h1 class="resume-name geek-name">Charles</h1>
+            <h1 class="resume-name"></h1>
+            <p class="resume-title" style="margin-top:6px;color:#4b5563;"></p>
         </div>
         <div id="github-commit-graph" class="github-graph-placeholder">
             <img src="" alt="GitHub commit 活跃图">
         </div>
     </section>
+
+    <!-- Personal info: education list + location will be filled from API -->
     <section class="resume-personal geek-personal">
         <h2>👨‍💻 个人信息</h2>
         <ul class="resume-list education-list">
-            <li>
-                <img src="/static/images/中国矿业大学-logo-1024px.png" alt="中国矿业大学" class="school-logo">
-                <span class="school-name">中国矿业大学 (2015-2019)</span>
-            </li>
-            <li>
-                <img src="/static/images/1024px-University_of_Macau_logo.svg.png" alt="澳门大学" class="school-logo">
-                <span class="school-name">澳门大学 (2019-2022)</span>
-            </li>
-            <li><span class="location-icon">📍</span>工作地点：上海 / 澳门</li>
+            <!-- Populated from /api/resume or preview -->
         </ul>
     </section>
+
+    <!-- Dynamic grid: summary, skills, experience, projects, contact -->
     <section class="resume-grid">
-        <div class="resume-card">
-            <h2>🎯 概要</h2>
-            <ul class="resume-list">
-                <li>5+ 年服务端开发经验，熟悉分布式与高并发</li>
-                <li>擅长 C++/Python/JavaScript，追求代码质量与可维护性</li>
-                <li>关注用户体验，能将技术与产品设计融合</li>
-            </ul>
-        </div>
-        <div class="resume-card">
-            <h2>🧰 技术栈</h2>
-            <ul class="resume-list two-col">
-                <li>C++, Python, Go, JavaScript</li>
-                <li>Flask, FastAPI, Django</li>
-                <li>SQLite, MySQL, PostgreSQL, Redis</li>
-                <li>Linux, Docker, Git, CI/CD</li>
-            </ul>
-        </div>
-        <div class="resume-card">
-            <h2>💼 经历</h2>
-            <div class="resume-item">
-                <div class="item-head">
-                    <span class="item-title">后端工程师 · 某互联网公司</span>
-                    <span class="item-time">2022 — 至今</span>
-                </div>
-                <ul class="resume-list">
-                    <li>主导核心服务稳定性与性能优化，99.95% 可用性</li>
-                    <li>设计并落地异步任务系统，吞吐提升 3x</li>
-                    <li>建设监控告警闭环，故障恢复时间缩短 50%</li>
-                </ul>
-            </div>
-            <div class="resume-item">
-                <div class="item-head">
-                    <span class="item-title">全栈开发 · 初创项目</span>
-                    <span class="item-time">2020 — 2022</span>
-                </div>
-                <ul class="resume-list">
-                    <li>从零搭建博客/后台系统，端到端交付</li>
-                    <li>实现 Markdown 渲染、搜索与多端适配</li>
-                </ul>
-            </div>
-        </div>
-        <div class="resume-card">
-            <h2>🏆 项目</h2>
-            <ul class="resume-list">
-                <li>高性能日志采集与查询平台（C++/SQLite）</li>
-                <li>个人知识库与博客系统（Flask/JS）</li>
-                <li>轻量化数据可视化组件库（Web）</li>
-            </ul>
-        </div>
-        <div class="resume-card" id="contact">
-            <h2>📫 联系</h2>
-            <ul class="resume-list">
-                <li>GitHub：<a href="https://github.com/charles" target="_blank">github.com/charles</a></li>
-                <li>Email：<a href="mailto:you@example.com">you@example.com</a></li>
-                <li>LinkedIn：<a href="https://linkedin.com/in/yourprofile" target="_blank">/in/yourprofile</a></li>
-            </ul>
-        </div>
+        <!-- Populated from /api/resume or preview -->
     </section>
 
     <!-- 悬浮返回按钮 -->
@@ -110,17 +52,29 @@
                     if (raw) return Promise.resolve(JSON.parse(raw));
                 } catch(e) {}
             }
-            return fetch('/api/resume').then(r=>r.json());
+            return fetch('/api/resume').then(r => {
+                if (!r.ok) return Promise.resolve(null);
+                return r.json();
+            }).catch(() => null);
         }
 
         function setText(sel, txt){ const el = document.querySelector(sel); if(el) el.textContent = txt || ''; }
 
         loadData().then(data => {
+            if (!data) {
+                const container = document.querySelector('.resume-container');
+                if (container) {
+                    container.innerHTML = `<div style="padding:40px;text-align:center;color:#374151;"><h2>暂无简历内容</h2><p>当前尚未在后台创建任何简历。前往 <a href="/admin/resume">后台编辑简历</a> 来创建。</p></div>`;
+                }
+                return;
+            }
+
             setText('.resume-name', data.name);
             setText('.resume-title', data.title);
             setText('.resume-summary', data.summary);
+            const ghUser = data.github_username || (data.contact && data.contact.github) || '';
             const gh = document.querySelector('#github-commit-graph img');
-            if (gh) gh.src = `https://ghchart.rshah.org/${data.github_username || ''}`;
+            if (gh) gh.src = `https://ghchart.rshah.org/${ghUser}`;
 
             // Education + location
             const educationList = document.querySelector('.education-list');
@@ -248,9 +202,10 @@
             contactCard.innerHTML = '<h2>📫 联系</h2>';
             const contactList = document.createElement('ul');
             contactList.className = 'resume-list';
-            if (data.contact && data.contact.github) {
+            const contactGithub = (data.contact && data.contact.github) || data.github_username || '';
+            if (contactGithub) {
                 const li = document.createElement('li');
-                const a = document.createElement('a'); a.href = `https://github.com/${data.contact.github}`; a.textContent = `github.com/${data.contact.github}`; a.target = '_blank';
+                const a = document.createElement('a'); a.href = `https://github.com/${contactGithub}`; a.textContent = `github.com/${contactGithub}`; a.target = '_blank';
                 li.textContent = 'GitHub：'; li.appendChild(a); contactList.appendChild(li);
             }
             if (data.contact && data.contact.email) {

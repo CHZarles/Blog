@@ -93,10 +93,17 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => saveStatus.style.display = 'none', 2500);
     }
 
-    // load existing resume
+    // load existing resume (tolerate 404 / empty responses)
     fetch('/api/resume')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                // no resume yet or other non-OK - allow admin to create one
+                return {};
+            }
+            return response.json();
+        })
         .then(data => {
+            data = data || {};
             document.getElementById('name').value = data.name || '';
             document.getElementById('title').value = data.title || '';
             document.getElementById('summary').value = data.summary || '';
@@ -194,18 +201,33 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-        }).then(r => r.json());
+        }).then(response => {
+            return response.text().then(text => {
+                let body = null;
+                try { body = text ? JSON.parse(text) : null; } catch(e) { body = { raw: text }; }
+                return { ok: response.ok, status: response.status, body };
+            });
+        });
     }
 
-    document.getElementById('save-top').addEventListener('click', () => {
+    function handleSaveClick() {
         const d = collectData();
-        save(d).then(res => setStatus(res.message || '已保存')).catch(() => setStatus('保存失败', false));
-    });
+        save(d)
+            .then(res => {
+                if (res.ok) {
+                    setStatus((res.body && (res.body.message || res.body.msg)) || '已保存');
+                    // clear preview if any (so About will show DB content)
+                    try { localStorage.removeItem('resume_preview'); } catch(e) {}
+                } else {
+                    const errMsg = (res.body && (res.body.error || res.body.message)) || `保存失败 (${res.status})`;
+                    setStatus(errMsg, false);
+                }
+            })
+            .catch(() => setStatus('保存失败', false));
+    }
 
-    document.getElementById('save-bottom').addEventListener('click', () => {
-        const d = collectData();
-        save(d).then(res => setStatus(res.message || '已保存')).catch(() => setStatus('保存失败', false));
-    });
+    document.getElementById('save-top').addEventListener('click', handleSaveClick);
+    document.getElementById('save-bottom').addEventListener('click', handleSaveClick);
 
     document.getElementById('preview-about').addEventListener('click', () => {
         const d = collectData();

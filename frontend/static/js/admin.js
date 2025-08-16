@@ -1,18 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // 登录校验：未登录则跳转到登录页
-    fetch('/api/admin/blog/list', { credentials: 'same-origin' })
-        .then(resp => {
-            if (resp.status === 401) {
-                window.location.href = '/admin-login.html';
-            }
-        });
-    // 登录校验：未登录则跳转到登录页
-    fetch('/api/admin/blog/list', { credentials: 'same-origin' })
-        .then(resp => {
-            if (resp.status === 401) {
-                window.location.href = '/admin-login.html';
-            }
-        });
     const app = document.getElementById('admin-app');
     const dynamicContent = document.getElementById('dynamic-content');
     const importFile = document.getElementById('import-file');
@@ -35,10 +21,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const tagsFilter = filterTags.value.toLowerCase().trim();
         
         filteredBlogs = blogs.filter(blog => {
-            const matchesCategory = !categoryFilter || 
-                (blog.category && blog.category.toLowerCase().includes(categoryFilter));
-            const matchesTags = !tagsFilter || 
-                (blog.tags && blog.tags.toLowerCase().includes(tagsFilter));
+            const blogCategory = (function(){
+                try { const c = JSON.parse(blog.category); return Array.isArray(c)? (c[0]||'') : (typeof c==='object'? c.value||'' : blog.category||''); } catch(e){ return blog.category||'' }
+            })();
+            const blogTags = (function(){
+                try { const t = JSON.parse(blog.tags); if (Array.isArray(t)) return t.map(x => (x.value||x)).join(', '); return blog.tags||'' } catch(e){ return blog.tags||'' }
+            })();
+            const matchesCategory = !categoryFilter || (blogCategory && blogCategory.toLowerCase().includes(categoryFilter));
+            const matchesTags = !tagsFilter || (blogTags && blogTags.toLowerCase().includes(tagsFilter));
             return matchesCategory && matchesTags;
         });
         
@@ -65,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${blogsToShow.map(blog => `
                         <tr>
                             <td>${blog.title}</td>
-                            <td>${blog.category || 'uncategorized'}</td>
-                            <td>${blog.tags || ''}</td>
+                            <td>${(function(){try{const c=JSON.parse(blog.category); if(Array.isArray(c)) return c[0].value||c[0]||''; if(typeof c==='object') return c.value||''; }catch(e){} return blog.category||'uncategorized'})()}</td>
+                            <td>${(function(){try{const t=JSON.parse(blog.tags); if(Array.isArray(t)) return t.map(x=>x.value||x).join(', ');}catch(e){} return blog.tags||'' })()}</td>
                             <td>
                                 <button class="preview-btn" data-id="${blog.id}">Preview</button>
                                 <button class="edit-blog" data-id="${blog.id}">Edit</button>
@@ -95,12 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderEditForm() {
         const blog = blogs.find(b => b.id === editingBlogId);
         return `
-            <h2>Edit Blog</h2>
+                <h2>Edit Blog</h2>
             <form id="edit-blog-form">
                 <input type="hidden" id="edit-id" value="${blog.id}">
                 <input type="text" id="edit-title" placeholder="Title" value="${blog.title}" required>
-                <input type="text" id="edit-category" placeholder="Category" value="${blog.category}">
-                <input type="text" id="edit-tags" placeholder="Tags (comma separated)" value="${blog.tags}">
+                <input type="text" id="edit-category" placeholder="Category" value="${(function(){try{const c=JSON.parse(blog.category); if(Array.isArray(c)) return c[0].value||c[0]||''; if(typeof c==='object') return c.value||'';}catch(e){} return blog.category||''})()}">
+                <input type="text" id="edit-tags" placeholder="Tags (comma separated)" value="${(function(){try{const t=JSON.parse(blog.tags); if(Array.isArray(t)) return t.map(x=>x.value||x).join(', ');}catch(e){} return blog.tags||'' })()}">
                 <textarea id="edit-content" placeholder="Content (Markdown)" required>${blog.content}</textarea>
                 <button type="submit">Update Blog</button>
                 <button type="button" id="cancel-edit">Cancel</button>
