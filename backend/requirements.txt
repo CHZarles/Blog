@@ -1,3 +1,4 @@
 Flask
 Flask-SQLAlchemy
 Markdown
+Flask-Cors
