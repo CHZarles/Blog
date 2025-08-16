@@ -450,6 +450,14 @@ body {
     border-bottom-color: var(--primary-color);
 }
 
+.content-wrapper img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    margin: 16px 0;
+}
+
 /* Enhanced Code Blocks */
 .content-wrapper .code-block-container {
     position: relative;
