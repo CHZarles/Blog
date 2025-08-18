@@ -6,10 +6,16 @@ import markdown
 import json
 import time
 from threading import Lock
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 # 全局变量用于SSE连接管理
 sse_connections = []
 sse_lock = Lock()
+
 
 def send_sse_notification(event_type, data=None):
     """发送SSE通知给所有连接的客户端"""
@@ -33,9 +39,9 @@ def create_app():
         DATABASE=f'sqlite:///{app.instance_path}/blog.sqlite',
     )
 
-    # 简易管理员账号（演示用）
-    ADMIN_USERNAME = 'admin'
-    ADMIN_PASSWORD = '123456'
+    # 从环境变量加载管理员凭证
+    ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
+    ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '123456')
 
     # Enable CORS: allow cross-origin requests to API endpoints. We allow credentials
     # so the admin session cookie can be sent from same-origin admin UI when needed.
