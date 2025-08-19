@@ -68,53 +68,113 @@ class TOCManager {
     }
     
     generate(content) {
-        // Find all headings in the content
+        // Find headings and build nested TOC with collapsible groups
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = content;
-        this.headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        
-        if (this.headings.length === 0) {
-            this.tocSection.style.display = 'none';
+        const headings = Array.from(tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+
+        if (headings.length === 0) {
+            // hide TOC via class so animations stay in CSS
+            this.tocSection.classList.add('hidden');
             return content;
         }
-        
-        // Generate TOC HTML and update content with IDs
-        let tocHTML = '';
+
         let updatedContent = content;
-        
-        this.headings.forEach((heading, index) => {
+        const tocRoot = document.createElement('ul');
+
+        // determine minimum heading level in document (e.g., 1 for h1)
+        const minLevel = Math.min(...headings.map(h => parseInt(h.tagName.substring(1))));
+        const collapseThreshold = minLevel + 1; // collapse deeper than this by default
+
+        // stack keeps track of current list container per level
+        const stack = [{ ul: tocRoot, level: minLevel - 1 }];
+
+        headings.forEach((heading, index) => {
             const id = `heading-${index}`;
-            const level = heading.tagName.toLowerCase();
+            const level = parseInt(heading.tagName.substring(1));
             const text = heading.textContent.trim();
-            
-            // Add ID to heading in content
+
+            // ensure heading has id in content
             const headingRegex = new RegExp(`<${heading.tagName}([^>]*)>${this.escapeRegex(text)}</${heading.tagName}>`, 'i');
             updatedContent = updatedContent.replace(headingRegex, `<${heading.tagName}$1 id="${id}">${text}</${heading.tagName}>`);
-            
-            // Add to TOC
-            tocHTML += `<a href="#${id}" class="toc-${level} toc-link" data-target="${id}">${text}</a>`;
+
+            // find parent container for this level
+            while (stack.length && level <= stack[stack.length - 1].level) stack.pop();
+            const currentParent = stack[stack.length - 1];
+
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.className = `toc-h${level} toc-link`;
+            a.setAttribute('data-target', id);
+            a.href = `#${id}`;
+            a.textContent = text;
+            li.appendChild(a);
+            currentParent.ul.appendChild(li);
+
+            // if next heading is deeper, create nested list
+            const next = headings[index + 1];
+                if (next && parseInt(next.tagName.substring(1)) > level) {
+                li.classList.add('collapsible');
+                const initiallyCollapsed = level >= collapseThreshold;
+                if (initiallyCollapsed) li.classList.add('collapsed'); else li.classList.add('expanded');
+
+                const toggleBtn = document.createElement('button');
+                toggleBtn.className = 'toggle-icon';
+                toggleBtn.type = 'button';
+                toggleBtn.setAttribute('aria-label', initiallyCollapsed ? 'Expand section' : 'Collapse section');
+                li.insertBefore(toggleBtn, a);
+
+                const newUl = document.createElement('ul');
+                newUl.className = 'nested';
+                // reflect collapsed state for assistive tech; actual show/hide is handled by CSS
+                if (initiallyCollapsed) newUl.setAttribute('aria-hidden', 'true');
+                else newUl.setAttribute('aria-hidden', 'false');
+                li.appendChild(newUl);
+                stack.push({ ul: newUl, level });
+            }
         });
-        
-        this.tocNav.innerHTML = tocHTML;
-        this.tocSection.style.display = 'block';
-        
-        // Add click handlers
-        this.tocNav.addEventListener('click', this.handleTOCClick.bind(this));
-        
-        // Set up intersection observer for active highlighting
+
+        this.tocNav.innerHTML = '';
+        this.tocNav.appendChild(tocRoot);
+    // show TOC via class so layout and transitions are consistent
+    this.tocSection.classList.remove('hidden');
+
+        // click handlers
+        this.tocNav.removeEventListener('click', this._boundHandle);
+        this._boundHandle = this.handleTOCClick.bind(this);
+        this.tocNav.addEventListener('click', this._boundHandle);
+
+        // intersection observer to highlight active heading
         this.setupIntersectionObserver();
-        
+
         return updatedContent;
     }
     
     handleTOCClick(event) {
-        event.preventDefault();
+        const toggle = event.target.closest('.toggle-icon');
+        if (toggle) {
+            event.preventDefault();
+            const li = toggle.parentElement;
+            const nested = li.querySelector(':scope > .nested');
+            // toggle collapsed class; aria-hidden is used to indicate visibility
+            const isNowCollapsed = li.classList.toggle('collapsed');
+            if (isNowCollapsed) {
+                li.classList.remove('expanded');
+                if (nested) nested.setAttribute('aria-hidden', 'true');
+                toggle.setAttribute('aria-label', 'Expand section');
+            } else {
+                li.classList.add('expanded');
+                if (nested) nested.setAttribute('aria-hidden', 'false');
+                toggle.setAttribute('aria-label', 'Collapse section');
+            }
+            return;
+        }
+
         const link = event.target.closest('.toc-link');
         if (!link) return;
-        
+        event.preventDefault();
         const targetId = link.getAttribute('data-target');
         const targetElement = document.getElementById(targetId);
-        
         if (targetElement) {
             AnimationUtils.scrollTo(targetElement);
             this.setActiveLink(link);
@@ -149,13 +209,23 @@ class TOCManager {
     
     setActiveLink(activeLink) {
         // Remove active class from all links
-        this.tocNav.querySelectorAll('.toc-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        
+        this.tocNav.querySelectorAll('.toc-link').forEach(link => link.classList.remove('active'));
+
         // Add active class to current link
         activeLink.classList.add('active');
         this.activeHeading = activeLink;
+
+        // ensure all parent collapsible groups are expanded so the active link is visible
+        let parent = activeLink.parentElement;
+        while (parent && parent !== this.tocNav) {
+                if (parent.classList && parent.classList.contains('collapsible')) {
+                    parent.classList.remove('collapsed');
+                    parent.classList.add('expanded');
+                    const nested = parent.querySelector(':scope > .nested');
+                    if (nested) nested.setAttribute('aria-hidden', 'false');
+                }
+            parent = parent.parentElement;
+        }
     }
     
     escapeRegex(string) {
@@ -640,9 +710,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     window.addEventListener('scroll', function() {
         if (window.pageYOffset > 300) {
-            scrollToTopBtn.style.display = 'flex';
+            scrollToTopBtn.classList.remove('hidden');
         } else {
-            scrollToTopBtn.style.display = 'none';
+            scrollToTopBtn.classList.add('hidden');
         }
     });
     
@@ -660,10 +730,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const backdrop = modal.querySelector('.mindmap-backdrop');
     
     function openMindMap() {
-        modal.style.display = 'block';
+        modal.classList.remove('hidden');
         blogDetailLoader.mindMap.render();
     }
-    function closeMindMap() { modal.style.display = 'none'; }
+    function closeMindMap() { modal.classList.add('hidden'); }
     
     fab.addEventListener('click', openMindMap);
     closeBtn.addEventListener('click', closeMindMap);
@@ -708,7 +778,7 @@ class MindMapRenderer {
         this.ctx = this.measureCanvas.getContext('2d');
         this.ctx.font = `${this.fontSize}px Georgia, serif`;
         window.addEventListener('resize', () => {
-            if (document.getElementById('mindmap-modal').style.display !== 'none') {
+            if (!document.getElementById('mindmap-modal').classList.contains('hidden')) {
                 this.render();
             }
         });
@@ -729,7 +799,7 @@ class MindMapRenderer {
             // Navigate to heading if available
             if (node.hrefId) {
                 const modal = document.getElementById('mindmap-modal');
-                modal.style.display = 'none';
+                modal.classList.add('hidden');
                 const target = document.getElementById(node.hrefId);
                 if (target) {
                     setTimeout(() => AnimationUtils.scrollTo(target), 50);
