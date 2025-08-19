@@ -141,6 +141,36 @@
         </svg>
     </button>
 
+    <!-- 思维导图悬浮按钮 -->
+    <button id="mindmap-fab" class="mindmap-fab" title="Show Mind Map">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <!-- central node -->
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+            <!-- child nodes -->
+            <circle cx="18" cy="8" r="2.2" fill="currentColor" />
+            <circle cx="6" cy="8" r="2.2" fill="currentColor" />
+            <circle cx="12" cy="18" r="2.2" fill="currentColor" />
+            <!-- links -->
+            <line x1="12" y1="12" x2="18" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <line x1="12" y1="12" x2="6" y2="8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            <line x1="12" y1="12" x2="12" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+    </button>
+
+    <!-- 思维导图弹层 -->
+    <div id="mindmap-modal" class="mindmap-modal" style="display: none;">
+        <div class="mindmap-backdrop"></div>
+        <div class="mindmap-dialog" role="dialog" aria-modal="true" aria-label="Mind Map">
+            <div class="mindmap-header">
+                <span>Mind Map</span>
+                <button id="mindmap-close" class="mindmap-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="mindmap-body">
+                <svg id="mindmap-svg"></svg>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script src="/static/js/main.js"></script>
     <script src="/static/js/blog-detail.js"></script>

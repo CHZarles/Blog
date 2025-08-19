@@ -310,6 +310,9 @@ class BlogDetailLoader {
         this.tagsEl = document.getElementById('article-tags');
         this.readingTimeEl = document.getElementById('reading-time');
         this.pageLoader = document.getElementById('page-loader');
+
+    // Mind map renderer
+    this.mindMap = new MindMapRenderer();
     }
     
     async loadBlog(blogId) {
@@ -407,6 +410,9 @@ class BlogDetailLoader {
         
         // Calculate and display article stats
         this.articleStats.calculate(renderedContent);
+
+    // Prepare mind map with current content
+    this.mindMap.prepareFromHTML(this.contentEl.querySelector('.content-wrapper'));
     }
     
     renderMarkdown(content) {
@@ -646,6 +652,22 @@ document.addEventListener('DOMContentLoaded', function() {
             behavior: 'smooth'
         });
     });
+
+    // Mind map modal open/close
+    const fab = document.getElementById('mindmap-fab');
+    const modal = document.getElementById('mindmap-modal');
+    const closeBtn = document.getElementById('mindmap-close');
+    const backdrop = modal.querySelector('.mindmap-backdrop');
+    
+    function openMindMap() {
+        modal.style.display = 'block';
+        blogDetailLoader.mindMap.render();
+    }
+    function closeMindMap() { modal.style.display = 'none'; }
+    
+    fab.addEventListener('click', openMindMap);
+    closeBtn.addEventListener('click', closeMindMap);
+    backdrop.addEventListener('click', closeMindMap);
 });
 
 // Global functions for external access
@@ -665,6 +687,252 @@ if (typeof module !== 'undefined' && module.exports) {
         TOCManager,
         ArticleStats,
         RelatedArticlesManager,
-        AnimationUtils
+        AnimationUtils,
+        MindMapRenderer
     };
+}
+
+// Mind Map Renderer - Pure JS SVG
+class MindMapRenderer {
+    constructor() {
+        this.svg = document.getElementById('mindmap-svg');
+        this.nodes = [];
+        this.root = null;
+        this.index = [];
+        this.padding = { x: 40, y: 24 };
+        this.nodeSize = { w: 180, h: 36, rx: 8 };
+        this.levelGapX = 220;
+        this.levelGapY = 16;
+        this.fontSize = 13;
+        this.measureCanvas = document.createElement('canvas');
+        this.ctx = this.measureCanvas.getContext('2d');
+        this.ctx.font = `${this.fontSize}px Georgia, serif`;
+        window.addEventListener('resize', () => {
+            if (document.getElementById('mindmap-modal').style.display !== 'none') {
+                this.render();
+            }
+        });
+
+        // Event delegation on SVG for toggle and navigation
+        this.svg.addEventListener('click', (e) => {
+            const group = e.target.closest('g[data-node-idx]');
+            if (!group) return;
+            const idx = parseInt(group.getAttribute('data-node-idx'), 10);
+            const node = this.index[idx];
+            if (!node) return;
+            const role = e.target.getAttribute('data-role');
+            if (role === 'toggle') {
+                node.collapsed = !node.collapsed;
+                this.render();
+                return;
+            }
+            // Navigate to heading if available
+            if (node.hrefId) {
+                const modal = document.getElementById('mindmap-modal');
+                modal.style.display = 'none';
+                const target = document.getElementById(node.hrefId);
+                if (target) {
+                    setTimeout(() => AnimationUtils.scrollTo(target), 50);
+                }
+            }
+        });
+    }
+
+    prepareFromHTML(container) {
+        // Extract headings and build a hierarchy
+        const headings = Array.from(container.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        if (headings.length === 0) { this.root = null; return; }
+
+        // Build nodes list with level and text
+        const items = headings.map((h, i) => {
+            // Ensure heading has an id for navigation
+            if (!h.id) {
+                h.id = `mm-heading-${i}`;
+            }
+            return { level: parseInt(h.tagName.substring(1)), text: h.textContent.trim(), hrefId: h.id };
+        });
+
+        // Determine root: first h1 if present, otherwise use first heading level as root
+        const minLevel = Math.min(...items.map(i => i.level));
+        const stack = [];
+        const root = { text: 'Article', level: minLevel - 1, hrefId: null, children: [], collapsed: false };
+        stack.push(root);
+        for (const item of items) {
+            while (stack.length && item.level <= stack[stack.length - 1].level) stack.pop();
+            const node = { text: item.text, level: item.level, hrefId: item.hrefId, children: [], collapsed: false };
+            stack[stack.length - 1].children.push(node);
+            stack.push(node);
+        }
+        this.root = root;
+    }
+
+    computeLayout() {
+        if (!this.root) return { width: 0, height: 0 };
+        // Measure text widths for node boxes
+        const measureTextWidth = (text) => {
+            const metrics = this.ctx.measureText(text);
+            return Math.ceil(metrics.width) + 24; // padding inside node
+        };
+
+        const nodeSize = this.nodeSize;
+
+        // First compute subtree sizes and assign y positions with tidy layout
+        let yCursor = 0;
+        function layout(node, depth) {
+            node.depth = depth;
+            node.width = Math.max(nodeSize.w, measureTextWidth(node.text));
+            node.height = nodeSize.h;
+            const hasChildren = node.children && node.children.length > 0;
+            if (!hasChildren || node.collapsed) {
+                node.subtreeHeight = node.height;
+                node.y = yCursor + node.height / 2;
+                yCursor += node.height + 12; // leaf gap
+                return;
+            }
+            let firstY = null, lastY = null, totalHeight = 0;
+            for (const child of node.children) {
+                layout(child, depth + 1);
+                if (firstY === null) firstY = child.y;
+                lastY = child.y;
+                totalHeight += child.subtreeHeight + 12;
+            }
+            totalHeight -= 12; // remove last gap
+            node.subtreeHeight = Math.max(totalHeight, node.height);
+            node.y = (firstY + lastY) / 2;
+        }
+        layout(this.root, 0);
+
+        // Assign x positions based on depth
+        const levelGapX = this.levelGapX;
+        function assignX(node) {
+            node.x = node.depth * levelGapX + 20;
+            for (const child of node.children || []) assignX(child);
+        }
+        assignX(this.root);
+
+        // Compute overall size
+    const maxDepth = (function maxD(node) { return Math.max(node.depth, ...((node.children || []).map(maxD)), 0); })(this.root);
+        const width = (maxDepth + 1) * levelGapX + 200;
+        const height = yCursor + 20;
+        return { width, height };
+    }
+
+    clearSVG() {
+        while (this.svg.firstChild) this.svg.removeChild(this.svg.firstChild);
+    }
+
+    drawNode(node, idx) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.setAttribute('transform', `translate(${node.x}, ${node.y - node.height / 2})`);
+        group.setAttribute('data-node-idx', String(idx));
+        group.setAttribute('class', 'mm-node');
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    // leave padding for toggle icon on the left
+    const leftPad = (node.children && node.children.length > 0) ? 18 : 0;
+        rect.setAttribute('x', String(leftPad));
+        rect.setAttribute('y', '0');
+        rect.setAttribute('rx', String(this.nodeSize.rx));
+        rect.setAttribute('ry', String(this.nodeSize.rx));
+        rect.setAttribute('width', String(node.width));
+        rect.setAttribute('height', String(node.height));
+        rect.setAttribute('filter', '');
+        rect.setAttribute('data-role', 'navigate');
+        rect.style.cursor = node.hrefId ? 'pointer' : 'default';
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', String(12 + leftPad));
+        text.setAttribute('y', String(this.nodeSize.h / 2 + this.fontSize / 3));
+        text.setAttribute('font-size', String(this.fontSize));
+        text.setAttribute('font-family', 'Georgia, serif');
+        text.textContent = node.text;
+        text.setAttribute('data-role', 'navigate');
+        text.style.cursor = node.hrefId ? 'pointer' : 'default';
+
+        // Toggle icon for nodes with children
+        const hasChildren = node.children && node.children.length > 0;
+        if (hasChildren) {
+            const cx = 10, cy = this.nodeSize.h / 2; // inside left padding
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', String(cx));
+            circle.setAttribute('cy', String(cy));
+            circle.setAttribute('r', '8');
+            circle.setAttribute('class', 'mm-toggle');
+            circle.setAttribute('data-role', 'toggle');
+            circle.style.cursor = 'pointer';
+            const hline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            hline.setAttribute('x1', String(cx - 5));
+            hline.setAttribute('y1', String(cy));
+            hline.setAttribute('x2', String(cx + 5));
+            hline.setAttribute('y2', String(cy));
+            hline.setAttribute('class', 'mm-toggle');
+            hline.setAttribute('data-role', 'toggle');
+            const vline = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            vline.setAttribute('x1', String(cx));
+            vline.setAttribute('y1', String(cy - 5));
+            vline.setAttribute('x2', String(cx));
+            vline.setAttribute('y2', String(node.collapsed ? cy + 5 : cy));
+            vline.setAttribute('class', 'mm-toggle');
+            vline.setAttribute('data-role', 'toggle');
+            group.appendChild(circle);
+            group.appendChild(hline);
+            if (node.collapsed) group.appendChild(vline);
+        }
+
+        group.appendChild(rect);
+        group.appendChild(text);
+        this.svg.appendChild(group);
+    }
+
+    drawLink(parent, child) {
+        const x1 = parent.x + parent.width;
+        const y1 = parent.y;
+        const x2 = child.x;
+        const y2 = child.y;
+        const mx = (x1 + x2) / 2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.setAttribute('class', 'mm-link');
+    path.setAttribute('fill', 'none');
+    this.svg.appendChild(path);
+    // endpoint dots
+    const d1 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    d1.setAttribute('cx', String(x1)); d1.setAttribute('cy', String(y1)); d1.setAttribute('r', '2'); d1.setAttribute('class', 'mm-dot');
+    const d2 = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    d2.setAttribute('cx', String(x2)); d2.setAttribute('cy', String(y2)); d2.setAttribute('r', '2'); d2.setAttribute('class', 'mm-dot');
+    this.svg.appendChild(d1);
+    this.svg.appendChild(d2);
+    }
+
+    render() {
+        if (!this.root) return;
+        this.clearSVG();
+        const { width, height } = this.computeLayout();
+        this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        // Build index mapping and draw links first
+        this.index = [];
+        let counter = 0;
+        const traverse = (node) => {
+            node._idx = counter++;
+            this.index[node._idx] = node;
+            if (!node.collapsed) {
+                for (const child of node.children || []) {
+                    this.drawLink(node, child);
+                    traverse(child);
+                }
+            }
+        };
+        traverse(this.root);
+
+        // Draw nodes
+        const traverseNodes = (node) => {
+            this.drawNode(node, node._idx);
+            if (!node.collapsed) {
+                for (const child of node.children || []) traverseNodes(child);
+            }
+        };
+        traverseNodes(this.root);
+    }
 }

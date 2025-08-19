@@ -689,11 +689,17 @@ body {
     color: var(--primary-color);
 }
 
-/* Table of Contents */
+/* Table of Contents: allow natural height and avoid internal scrollbars; collapsing controls height */
 .toc-nav {
-    max-height: 400px;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
 }
+.toc-nav::-webkit-scrollbar { display: none; }
+
+/* Ensure nested lists don't introduce scrollbars */
+.toc-nav ul, .toc-nav li { max-height: none; overflow: visible; }
 
 .toc-nav a {
     display: block;
@@ -826,6 +832,75 @@ body {
     height: 20px;
     stroke-width: 2;
 }
+
+/* Mind Map Floating Action Button */
+.mindmap-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 84px;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(145deg, var(--primary-color), #0a5ab8);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    box-shadow: var(--shadow-medium), 0 0 0 3px rgba(255,255,255,0.6) inset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-medium), box-shadow var(--transition-medium), background var(--transition-medium);
+    z-index: 1000;
+}
+
+.mindmap-fab:hover { transform: translateY(-2px); box-shadow: var(--shadow-heavy); background: linear-gradient(145deg, #0a5ab8, var(--secondary-color)); }
+.mindmap-fab svg { width: 24px; height: 24px; stroke-width: 2; }
+
+/* label tooltip for fab */
+.mindmap-fab::after {
+    content: '思维导图';
+    position: absolute;
+    right: 56px;
+    white-space: nowrap;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 12px;
+    opacity: 0;
+    transform: translateX(6px);
+    transition: all var(--transition-medium);
+    pointer-events: none;
+}
+.mindmap-fab:hover::after { opacity: 1; transform: translateX(0); }
+
+/* Mind Map Modal */
+.mindmap-modal { position: fixed; inset: 0; z-index: 1100; }
+.mindmap-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(2px); }
+.mindmap-dialog {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(1000px, 92vw);
+    height: min(680px, 86vh);
+    background: var(--background-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    display: flex; flex-direction: column;
+}
+.mindmap-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border-color); font-weight: 600; }
+.mindmap-close { background: transparent; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--text-secondary); }
+.mindmap-body { flex: 1; overflow: hidden; }
+.mindmap-body svg#mindmap-svg { width: 100%; height: 100%; display: block; background: var(--background-tertiary); }
+
+/* Mind map SVG styling */
+.mindmap-body svg .mm-link { stroke: rgba(0, 102, 204, 0.45); stroke-width: 1.8; stroke-linecap: round; }
+.mindmap-body svg .mm-dot { fill: var(--primary-color); opacity: 0.6; }
+.mindmap-body svg .mm-node rect { fill: #fff; stroke: var(--border-color); }
+.mindmap-body svg .mm-node text { fill: var(--text-primary); }
+.mindmap-body svg circle.mm-toggle { fill: #fff; stroke: var(--primary-color); stroke-width: 1.4; transition: fill var(--transition-medium); }
+.mindmap-body svg circle.mm-toggle:hover { fill: #eef5ff; }
+.mindmap-body svg line.mm-toggle { stroke: var(--primary-color); stroke-width: 2; stroke-linecap: round; }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
