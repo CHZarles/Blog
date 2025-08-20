@@ -770,7 +770,12 @@ class MindMapRenderer {
         this.root = null;
         this.index = [];
         this.padding = { x: 40, y: 24 };
-        this.nodeSize = { w: 180, h: 36, rx: 8 };
+    this.nodeSize = { w: 180, h: 36, rx: 8 };
+    // text and wrapping config
+    this.minNodeWidth = 160;
+    this.maxNodeWidth = 300; // clamp to avoid overly wide nodes
+    this.textPadding = { x: 12, y: 8 };
+    this.lineGap = 6;
         this.levelGapX = 220;
         this.levelGapY = 16;
         this.fontSize = 13;
@@ -806,6 +811,51 @@ class MindMapRenderer {
                 }
             }
         });
+    }
+
+    // Wrap text into multiple lines to fit within maxContentWidth
+    wrapText(text, maxContentWidth) {
+        const words = String(text || '').split(/\s+/).filter(Boolean);
+        const lines = [];
+        let current = '';
+        const measure = (s) => this.ctx.measureText(s).width;
+        for (const w of words) {
+            if (current === '') {
+                // start a new line; if single word too long, break it
+                if (measure(w) <= maxContentWidth) {
+                    current = w;
+                } else {
+                    // hard-wrap the long word
+                    let buf = '';
+                    for (const ch of w) {
+                        if (measure(buf + ch) <= maxContentWidth) buf += ch; else {
+                            if (buf) lines.push(buf);
+                            buf = ch;
+                        }
+                    }
+                    current = buf;
+                }
+            } else if (measure(current + ' ' + w) <= maxContentWidth) {
+                current += ' ' + w;
+            } else {
+                lines.push(current);
+                if (measure(w) <= maxContentWidth) {
+                    current = w;
+                } else {
+                    // hard-wrap the long word across lines
+                    let buf = '';
+                    for (const ch of w) {
+                        if (measure(buf + ch) <= maxContentWidth) buf += ch; else {
+                            if (buf) lines.push(buf);
+                            buf = ch;
+                        }
+                    }
+                    current = buf;
+                }
+            }
+        }
+        if (current) lines.push(current);
+        return lines.length ? lines : [''];
     }
 
     prepareFromHTML(container) {
@@ -850,9 +900,21 @@ class MindMapRenderer {
         let yCursor = 0;
         function layout(node, depth) {
             node.depth = depth;
-            node.width = Math.max(nodeSize.w, measureTextWidth(node.text));
-            node.height = nodeSize.h;
             const hasChildren = node.children && node.children.length > 0;
+            const leftPad = hasChildren ? 18 : 0; // space for toggle
+            // wrap text within max node width
+            const maxContentWidth = Math.max(40, Math.min(
+                (thisRef.maxNodeWidth - leftPad - 2 * thisRef.textPadding.x),
+                1000
+            ));
+            const lines = thisRef.wrapText(node.text, maxContentWidth);
+            const lineHeight = thisRef.fontSize + thisRef.lineGap;
+            const contentWidth = Math.ceil(Math.max(...lines.map(l => thisRef.ctx.measureText(l).width), 0));
+            const paddedWidth = contentWidth + 2 * thisRef.textPadding.x;
+            node.width = Math.max(thisRef.minNodeWidth, Math.min(thisRef.maxNodeWidth - leftPad, paddedWidth));
+            node.height = Math.max(thisRef.nodeSize.h, lines.length * lineHeight + 2 * thisRef.textPadding.y);
+            node._lines = lines;
+            node._leftPad = leftPad;
             if (!hasChildren || node.collapsed) {
                 node.subtreeHeight = node.height;
                 node.y = yCursor + node.height / 2;
@@ -870,19 +932,38 @@ class MindMapRenderer {
             node.subtreeHeight = Math.max(totalHeight, node.height);
             node.y = (firstY + lastY) / 2;
         }
+        const thisRef = this;
         layout(this.root, 0);
 
-        // Assign x positions based on depth
-        const levelGapX = this.levelGapX;
-        function assignX(node) {
-            node.x = node.depth * levelGapX + 20;
-            for (const child of node.children || []) assignX(child);
+        // Compute column widths per depth so long titles don't overlap
+        const depthWidths = [];
+        (function collect(node) {
+            const leftPad = node._leftPad || 0;
+            depthWidths[node.depth] = Math.max(depthWidths[node.depth] || 0, node.width + leftPad);
+            for (const c of node.children || []) collect(c);
+        })(this.root);
+
+        // Build x-offsets for each depth as cumulative sum of previous columns + gap
+        const colGap = 40; // horizontal gap between columns
+        const colX = [];
+        colX[0] = 20;
+        for (let d = 1; d < depthWidths.length; d++) {
+            const prev = depthWidths[d - 1] || this.nodeSize.w;
+            colX[d] = (colX[d - 1] || 20) + prev + colGap;
         }
-        assignX(this.root);
+
+        (function assignX(node) {
+            node.x = colX[node.depth] || (20 + node.depth * (nodeSize.w + colGap));
+            for (const child of node.children || []) assignX(child);
+        })(this.root);
 
         // Compute overall size
-    const maxDepth = (function maxD(node) { return Math.max(node.depth, ...((node.children || []).map(maxD)), 0); })(this.root);
-        const width = (maxDepth + 1) * levelGapX + 200;
+        const totalWidth = depthWidths.reduce((sum, w, i) => {
+            if (typeof w !== 'number') return sum;
+            if (i === 0) return 20 + w;
+            return sum + colGap + w;
+        }, 0);
+        const width = totalWidth + 200; // right-side padding
         const height = yCursor + 20;
         return { width, height };
     }
@@ -897,9 +978,9 @@ class MindMapRenderer {
         group.setAttribute('data-node-idx', String(idx));
         group.setAttribute('class', 'mm-node');
 
-    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    // leave padding for toggle icon on the left
-    const leftPad = (node.children && node.children.length > 0) ? 18 : 0;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        // leave padding for toggle icon on the left
+        const leftPad = node._leftPad || 0;
         rect.setAttribute('x', String(leftPad));
         rect.setAttribute('y', '0');
         rect.setAttribute('rx', String(this.nodeSize.rx));
@@ -911,18 +992,33 @@ class MindMapRenderer {
         rect.style.cursor = node.hrefId ? 'pointer' : 'default';
 
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', String(12 + leftPad));
-        text.setAttribute('y', String(this.nodeSize.h / 2 + this.fontSize / 3));
+        const textX = leftPad + this.textPadding.x;
+        const baseY = this.textPadding.y + this.fontSize; // baseline for first line
+        text.setAttribute('x', String(textX));
+        text.setAttribute('y', String(baseY));
         text.setAttribute('font-size', String(this.fontSize));
         text.setAttribute('font-family', 'Georgia, serif');
-        text.textContent = node.text;
         text.setAttribute('data-role', 'navigate');
         text.style.cursor = node.hrefId ? 'pointer' : 'default';
+        // add tspans for lines
+        const lineHeight = this.fontSize + this.lineGap;
+        (node._lines || [node.text]).forEach((line, i) => {
+            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            tspan.setAttribute('x', String(textX));
+            if (i === 0) {
+                tspan.setAttribute('dy', '0');
+            } else {
+                tspan.setAttribute('dy', String(lineHeight));
+            }
+            tspan.textContent = line;
+            tspan.setAttribute('data-role', 'navigate');
+            text.appendChild(tspan);
+        });
 
         // Toggle icon for nodes with children
         const hasChildren = node.children && node.children.length > 0;
         if (hasChildren) {
-            const cx = 10, cy = this.nodeSize.h / 2; // inside left padding
+            const cx = 10, cy = node.height / 2; // center vertically to actual height
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', String(cx));
             circle.setAttribute('cy', String(cy));
@@ -955,9 +1051,11 @@ class MindMapRenderer {
     }
 
     drawLink(parent, child) {
-        const x1 = parent.x + parent.width;
+        const parentLeftPad = (parent.children && parent.children.length > 0) ? 18 : 0;
+        const childLeftPad = (child.children && child.children.length > 0) ? 18 : 0;
+        const x1 = parent.x + parentLeftPad + parent.width;
         const y1 = parent.y;
-        const x2 = child.x;
+        const x2 = child.x + childLeftPad;
         const y2 = child.y;
         const mx = (x1 + x2) / 2;
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -978,6 +1076,16 @@ class MindMapRenderer {
         if (!this.root) return;
         this.clearSVG();
         const { width, height } = this.computeLayout();
+        // Auto-resize dialog to fit content (clamped to viewport)
+        const dialog = document.querySelector('.mindmap-dialog');
+        if (dialog) {
+            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+            const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+            const targetW = Math.min(width + 120, Math.floor(vw * 0.92));
+            const targetH = Math.min(height + 120, Math.floor(vh * 0.86));
+            dialog.style.width = `${Math.max(600, targetW)}px`;
+            dialog.style.height = `${Math.max(400, targetH)}px`;
+        }
         this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
